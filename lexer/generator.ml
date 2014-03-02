@@ -22,7 +22,6 @@ let rec genstr s tbl =
    String.concat "" (List.map process_item items)
 
 let action_of_string a =
-   printf "aos: %s" a;
    match a.[0] with 
    | 'U' -> GoState (List.nth (Str.split (Str.regexp " ") a) 1)
    | 'V' -> GoBack  (int_of_string (List.nth (Str.split (Str.regexp " ") a) 1))
