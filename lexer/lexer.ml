@@ -7,4 +7,6 @@ open Tools
 let _ =
    let (rules : gen_rule list), (state : string) = 
       Marshal.from_string Lang.data 0 in
+   let input = read_lines stdin in
    ()
+

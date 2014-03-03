@@ -23,9 +23,10 @@ let rec genstr s tbl =
    String.concat "" (List.map process_item items)
 
 let action_of_string a =
+   let sec x = List.nth (Str.split (Str.regexp " ") a) 1 in
    match a.[0] with 
-   | 'U' -> GoState (List.nth (Str.split (Str.regexp " ") a) 1)
-   | 'V' -> GoBack  (int_of_string (List.nth (Str.split (Str.regexp " ") a) 1))
+   | 'U' -> GoState (sec a)
+   | 'V' -> GoBack  (int_of_string (sec a))
    | 'N' -> NewLine
    |  x  -> failwith (sprintf "Lexer: Unexpected first letter in action parsing %c" x)
 
