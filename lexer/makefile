@@ -1,12 +1,17 @@
 
-all: generator
+all: lexer
 
 utils:
 	ocamlc -c ../common/utils.ml
 
-lexer: utils lexer.ml
-	ocamlc -I ../common utils.cmo str.cma -c lexer.ml -o lexer
+tools:
+	ocamlc -c tools.ml
 
-generator: generator.ml utils lexer
-	ocamlc -I ../common utils.cmo str.cma lexer.cmo generator.ml -o generator
+lexer: utils lexer.ml tools generator
+	bash -c "./generator < simpleC.lan"
+	ocamlc -c lang.ml
+	ocamlc -I ../common/ utils.cmo str.cma lang.cmo tools.cmo -c lexer.ml -o lexer
+
+generator: generator.ml utils tools
+	ocamlc -I ../common/ utils.cmo str.cma tools.cmo generator.ml -o generator
 

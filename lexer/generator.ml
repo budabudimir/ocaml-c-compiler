@@ -3,6 +3,7 @@ open Printf
 open Scanf
 open Utils
 open Lexer
+open Tools
 
 let make_regexes defs =
    let parse line = sscanf line "{%[a-zA-Z]} %s" (fun x y -> x, y) in
@@ -60,6 +61,7 @@ let _ =
          let str = Marshal.to_string (init_state, lan_rules) [] in
          let out = open_out "lang.ml" in
          fprintf out "let data = \"";
-         fprintf out "\"n"
+         String.iter (fun x -> fprintf out "\\%03d" (int_of_char x)) str;
+         fprintf out "\"\n"
    | _ -> failwith "Lexer: Reading from description file failed" 
 
