@@ -27,31 +27,31 @@ let rec build stack top =
   | [] -> flatten top
   | _  -> fail ()
 
-let tokenize str =
-  let rec loop i esc =
-    if i = String.length str then
-      []
-    else if esc then
-      let t = match str.[i] with
-        | '_' -> TChar ' '
-        | 'n' -> TChar '\n'
-        | 't' -> TChar '\t'
-        | c   -> TChar c
-      in
-      t :: loop (i+1) false
-    else if str.[i] = '\\' then
-      loop (i+1) true
-    else
-      let t = match str.[i] with
-        | '$' -> TEps
-        | '|' -> TOr
-        | '*' -> TStar
-        | '(' -> TOpen
-        | ')' -> TClose
-        | c   -> TChar c
-      in
-      t :: loop (i+1) false
-  in
-  loop 0 false
+let create regex = 
+   let tokenize str =
+     let rec loop i esc =
+       if i = String.length str then
+         []
+       else if esc then
+         let t = match str.[i] with
+           | '_' -> TChar ' '
+           | 'n' -> TChar '\n'
+           | 't' -> TChar '\t'
+           | c   -> TChar c
+         in
+         t :: loop (i+1) false
+       else if str.[i] = '\\' then
+         loop (i+1) true
+       else
+         let t = match str.[i] with
+           | '$' -> TEps
+           | '|' -> TOr
+           | '*' -> TStar
+           | '(' -> TOpen
+           | ')' -> TClose
+           | c   -> TChar c
+         in
+         t :: loop (i+1) false
+     in loop 0 false
+   in build [] [Eps] (tokenize regex)
 
-let create regex = build [] [Eps] (tokenize regex)
