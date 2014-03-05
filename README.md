@@ -3,4 +3,5 @@ ocaml-c-compiler
 
 Compiler for C written in OCaml
 
-Lexer in progress
+Lexer written by Stjepan Glavina
+Syntax analysis in progress
