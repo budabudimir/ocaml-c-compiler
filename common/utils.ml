@@ -16,3 +16,22 @@ let rec unique xs ys =
    | x::xs, y::ys when y < x -> y :: unique (x::xs) ys
    | x::xs, y::ys -> x :: unique xs ys
 
+let rec drop n = function
+   | h::t when n > 0 -> drop (n-1) t
+   | rest -> rest
+
+let rec take n = function
+   | h::t when n > 0 -> h :: take (n-1) t
+   | rest -> []
+
+let rec exists_flatten f = function
+   | h::t -> List.exists f h || exists_flatten f t
+   | []   -> false
+
+(* string utils *)
+let s_from s i = String.sub s i (String.length s - i)
+
+
+(* StringSet *)
+module StringSet = Set.Make (String)
+
