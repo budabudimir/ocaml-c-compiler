@@ -35,3 +35,4 @@ let s_from s i = String.sub s i (String.length s - i)
 (* StringSet *)
 module StringSet = Set.Make (String)
 
+let ( >| ) l f = StringSet.iter f l

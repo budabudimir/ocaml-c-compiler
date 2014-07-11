@@ -106,7 +106,7 @@
  KR_RETURN <izraz> TOCKAZAREZ
 <prijevodna_jedinica>
  <vanjska_deklaracija>
- <prijevodna_jedinica> <vanjska_deklaracija>
+ <vanjska_deklaracija> <prijevodna_jedinica>
 <vanjska_deklaracija>
  <definicija_funkcije>
  <deklaracija>

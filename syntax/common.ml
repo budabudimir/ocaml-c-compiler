@@ -21,3 +21,9 @@ module UniformSet = Set.Make (
 )
 
 let one_elem x = UniformSet.add x UniformSet.empty
+
+let ( |>  ) l f = List.iter f l
+let ( >>  ) l f = Hashtbl.iter f l
+let ( >|> ) l f = UniformSet.iter f l
+
+let ( $ ) f v = f v
