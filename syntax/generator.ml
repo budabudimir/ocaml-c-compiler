@@ -13,13 +13,11 @@ module L  = List
 let emptyTerm = UTerminal "$"
 
 let all_unis_n = 50
-
 let first       = H.create all_unis_n
 let productions = H.create all_unis_n
-
-let terminals = ref $ SS.empty
-let synchrons = ref $ SS.empty
-let literals  = ref $ SS.empty
+let terminals = ref SS.empty
+let synchrons = ref SS.empty
+let literals  = ref SS.empty
 
 let getProds = function 
    | (ULiteral s) as l -> H.find productions l
@@ -54,8 +52,7 @@ let rec find_first elem =
     then H.find first elem
     else begin
       H.add first elem U.empty;
-      let f = find_first' elem in
-      H.add first elem f;
+      let f = find_first' elem in H.add first elem f;
       f
     end;
 and find_first' = function
@@ -77,13 +74,10 @@ and find_first' = function
 
 let rec prod_first l = 
   match l with
-  | h::t when is_nullable h ->
-    U.union (H.find first h) $ prod_first t
-  | (ULiteral s as h) :: t ->
-    H.find first h
-  | h :: t ->
-    one_elem h
-  | [] -> U.empty
+  | h::t when is_nullable h -> U.union (H.find first h) $ prod_first t
+  | (ULiteral s as h) :: t  -> H.find first h
+  | h :: t                  -> one_elem h
+  | []                      -> U.empty
 
 let closures = H.create 50
 
@@ -94,7 +88,6 @@ let closure_one = mem_rec closures (fun closure_one -> function
     let new_set = L.fold_left (@) [] $ L.map (fun x ->
       U.fold (fun y a -> ([],x,y) :: a) terminals' []) productions' in
     new_set @ (L.fold_left (@) [] $ L.map closure_one new_set)
-    (* L.fold_left (fun r x -> r @ (x :: closure_one x)) [] new_set *)
   | _, [], a -> []
 )
 
@@ -108,8 +101,13 @@ let goto i x =
   ) [] i in
   closure_set new_set
 
-let items start =
-  ()
+let rec gen_automaton items symbols =
+  let transitions = L.map (fun x ->
+    let next_rl_items = goto items x in
+    let next_state = gen_automaton next_rl_items symbols in 
+    (x, next_state)
+  ) symbols in
+  new_state items transitions
 
 let _ =
   let input = read_lines stdin in
