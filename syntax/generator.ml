@@ -47,30 +47,26 @@ let is_nullable = function
    | UTerminal "$"     -> true
    | _                 -> false
 
-let rec find_first elem =
-    if H.mem first elem
-    then H.find first elem
-    else begin
-      H.add first elem U.empty;
-      let f = find_first' elem in H.add first elem f;
-      f
-    end;
-and find_first' = function
-   | (ULiteral s) as l -> 
-     let prods = getProds l in
-     let rec mapf = function
-        | (ULiteral h as x) :: t -> 
-          if is_nullable x 
-          then U.union (find_first x) (mapf t)
-          else find_first x
-        | (UTerminal h as x) :: t -> one_elem x
-        | (USynchro  h as x) :: t -> one_elem x
-        | [] -> U.empty
-     in
-     let firsts = L.map mapf prods in
-     L.fold_left U.union U.empty firsts;
-   | UTerminal s as l -> one_elem l
-   | USynchro  s as l -> one_elem l
+
+let find_first = mem_rec first (fun find_first elem -> 
+  H.add first elem U.empty;
+  match elem with
+  | (ULiteral s) as l -> 
+    let prods = getProds l in
+    let rec mapf = function
+      | (ULiteral h as x) :: t -> 
+        if is_nullable x 
+        then U.union (find_first x) (mapf t)
+        else find_first x
+      | (UTerminal h as x) :: t -> one_elem x
+      | (USynchro  h as x) :: t -> one_elem x
+      | [] -> U.empty
+    in
+    let firsts = L.map mapf prods in
+    L.fold_left U.union U.empty firsts;
+  | UTerminal s as l -> one_elem l
+  | USynchro  s as l -> one_elem l
+)
 
 let rec prod_first l = 
   match l with
