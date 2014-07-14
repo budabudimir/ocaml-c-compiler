@@ -9,7 +9,7 @@ type rl_item = int * uniform * uniform list * uniform
 
 type state = {
   transitions : (uniform * int) list;
-  rl_items    : rl_item                  list;
+  rl_items    : rl_item         list;
 }
 
 let new_state i t = {
