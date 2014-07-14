@@ -142,9 +142,6 @@ let _ =
 
     let startingSet = IS.add (
       closure (I.add (0,startLitr,[List.hd ulit], emptyTerm) I.empty)) IS.empty in
-    output_sets startingSet;
-    printf "kurac\n";
-
     let c = gen_items startingSet all in
     output_sets c
   | _ -> failwith "Syntax: wrong data descriptor"
