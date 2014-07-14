@@ -119,6 +119,17 @@ let rec gen_items old_set symbols =
   then old_set
   else gen_items new_set symbols
 
+let reduce i a =
+  let reduce = I.fold (fun x r ->
+    match x with
+    | (l,c,[],a') when a = a' -> (l,c)::r
+    | _ -> r
+  ) i [] in
+  match reduce with
+  | [x] -> Some x
+  | []  -> None
+  | _   -> failwith "Ambigous reduction"
+
 let _ =
   let input = read_lines stdin in
   match input with 
@@ -142,6 +153,30 @@ let _ =
 
     let startingSet = IS.add (
       closure (I.add (0,startLitr,[List.hd ulit], emptyTerm) I.empty)) IS.empty in
+
     let c = gen_items startingSet all in
-    output_sets c
+    let enum = H.create all_unis_n in
+    let i = ref 0 in
+    
+    IS.iter (fun x -> H.add enum x !i; incr i) c;
+
+    let action_table = H.create all_unis_n in
+
+    IS.iter (fun i ->
+      L.iter (fun a -> 
+        match reduce i a with
+        | Some (l,c) -> 
+            H.add action_table (i,a) $ TReduce (c,l)
+        | None when H.mem goto_map (i,a)-> 
+            H.add action_table (i,a) $ TShift (H.find enum (goto (i,a)))
+        | _ -> 
+            H.add action_table (i,a) TError
+      ) all
+    ) c;
+
+    let str = Marshal.to_string action_table [] in
+    let out = open_out "lang.ml" in
+    fprintf out "let data = \"";
+    String.iter (fun c -> fprintf out "\\%03d" (int_of_char c)) str;
+    fprintf out "\"\n";
   | _ -> failwith "Syntax: wrong data descriptor"
