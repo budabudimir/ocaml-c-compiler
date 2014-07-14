@@ -1,6 +1,5 @@
 
 open Printf
-open Scanf
 open Utils
 open Common
 open Automaton
@@ -9,19 +8,21 @@ module SS = StringSet
 module H  = Hashtbl
 module U  = UniformSet
 module L  = List
+module I  = ItemSet
+module IS = ItemSetSet
 
 let emptyTerm = UTerminal "$"
+let startLitr = ULiteral  "q0"
+let all_unis_n = 100
 
-let all_unis_n = 50
-let first       = H.create all_unis_n
 let productions = H.create all_unis_n
 let terminals = ref SS.empty
 let synchrons = ref SS.empty
 let literals  = ref SS.empty
 
 let getProds = function 
-   | (ULiteral s) as l -> H.find productions l
-   | _ -> []
+  | (ULiteral s) as l -> H.find productions l
+  | _ -> []
 
 let uniform_of_string s =
    if SS.mem s !terminals      then UTerminal s
@@ -43,10 +44,11 @@ let rec create_rules lines =
    | [] -> []
 
 let is_nullable = function
-   | (ULiteral s) as l -> exists_flatten ((=) emptyTerm) $ getProds l
-   | UTerminal "$"     -> true
-   | _                 -> false
+  | (ULiteral s) as l -> exists_flatten ((=) emptyTerm) $ getProds l
+  | UTerminal "$"     -> true
+  | _                 -> false
 
+let first = H.create all_unis_n
 
 let find_first = mem_rec first (fun find_first elem -> 
   H.add first elem U.empty;
@@ -70,40 +72,52 @@ let find_first = mem_rec first (fun find_first elem ->
 
 let rec prod_first l = 
   match l with
-  | h::t when is_nullable h -> U.union (H.find first h) $ prod_first t
-  | (ULiteral s as h) :: t  -> H.find first h
+  | h::t when is_nullable h -> U.union (find_first h) $ prod_first t
+  | (ULiteral s as h) :: t  -> find_first h
   | h :: t                  -> one_elem h
   | []                      -> U.empty
 
-let closures = H.create 50
+  
+let closures = H.create 1000
+let goto_map = H.create 1000
 
-let closure_one = mem_rec closures (fun closure_one -> function
-  | _, h::t, a ->
-    let productions' = getProds h in
-    let terminals' = prod_first $ t @ [a] in
-    let new_set = L.fold_left (@) [] $ L.map (fun x ->
-      U.fold (fun y a -> ([],x,y) :: a) terminals' []) productions' in
-    new_set @ (L.fold_left (@) [] $ L.map closure_one new_set)
-  | _, [], a -> []
+let rec closure = mem_rec closures (fun closure old_set ->
+  let new_set = I.fold (fun x result ->
+    match x with 
+    | _,_,h::t,look ->
+      let prods = getProds h in
+      let terms = prod_first $ t @ [look] in
+      let sets = L.fold_left (fun result prod ->
+        let set = U.fold (fun b r -> I.add (0,h,prod,b) r) terms I.empty in
+        I.union result set
+      ) I.empty prods in
+      I.union result sets
+    | _ -> result
+  ) old_set I.empty in 
+  let new_set = I.union new_set old_set in
+  if I.subset new_set old_set 
+  then new_set
+  else closure new_set
 )
 
-let closure_set i =
-  i @ (L.fold_left (@) [] $ L.map closure_one i)
-
-let goto i x =
-  let new_set = L.fold_left (fun result -> function
-    | r, h::t, a when h = x -> (h::r,t,a) :: result
+let goto = mem_rec goto_map (fun goto (i,x) ->
+  closure (I.fold (fun item result ->
+    match item with 
+    | len,left,h::t,look when h = x -> 
+        I.add (len+1,left,t,look) result
     | _ -> result
-  ) [] i in
-  closure_set new_set
+  ) i I.empty)
+)
 
-let rec gen_automaton items symbols =
-  let transitions = L.map (fun x ->
-    let next_rl_items = goto items x in
-    let next_state = gen_automaton next_rl_items symbols in 
-    (x, next_state)
-  ) symbols in
-  new_state items transitions
+let rec gen_items old_set symbols =
+  let new_sets = IS.fold (fun i c -> 
+    let goto_sets = L.fold_left (fun r x -> 
+      IS.add (goto (i,x)) r) IS.empty symbols in
+    IS.union c goto_sets) old_set IS.empty in
+  let new_set = IS.union old_set new_sets in
+  if IS.subset new_set old_set 
+  then old_set
+  else gen_items new_set symbols
 
 let _ =
   let input = read_lines stdin in
@@ -117,8 +131,20 @@ let _ =
     terminals := SS.union !terminals $ L.fold_right SS.add terms SS.empty;
     synchrons := SS.union !synchrons $ L.fold_right SS.add syncs SS.empty;
 
+    let ulit = L.map uniform_of_string litrs in
+    let utrm = L.map uniform_of_string terms in
+    let usyn = L.map uniform_of_string syncs in
+
+    let all = ulit @ utrm @ usyn in
     let rules = create_rules rules in
+
     rules |> (fun (left,rajt) -> H.add productions left rajt);
-    let all = L.map uniform_of_string $ litrs @ terms @ syncs in
-    all |> (fun x -> H.add first x $ find_first x);
+
+    let startingSet = IS.add (
+      closure (I.add (0,startLitr,[List.hd ulit], emptyTerm) I.empty)) IS.empty in
+    output_sets startingSet;
+    printf "kurac\n";
+
+    let c = gen_items startingSet all in
+    output_sets c
   | _ -> failwith "Syntax: wrong data descriptor"

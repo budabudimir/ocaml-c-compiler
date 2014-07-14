@@ -40,6 +40,18 @@ let ( |> ) l f = List.iter f l
 let ( >> ) l f = Hashtbl.iter f l
 let ( $ ) f v = f v
 
+let enumerate tbl f =
+  let module H = Hashtbl in
+  fun p ->
+    if H.mem tbl p
+    then H.find tbl p
+    else begin 
+      let r = 1 + H.length tbl in 
+      H.add tbl p (1 + H.length tbl);
+      f p;
+      r
+    end
+
 let memoize tbl f =
   let module H = Hashtbl in
   fun p -> 
@@ -49,4 +61,8 @@ let memoize tbl f =
 
 let mem_rec tbl f =
   let rec fn = lazy (memoize tbl (fun x -> f (Lazy.force fn) x)) in
+  Lazy.force fn
+
+let enum_rec tbl f =
+  let rec fn = lazy (enumerate tbl (fun x -> f (Lazy.force fn) x)) in
   Lazy.force fn

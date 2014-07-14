@@ -9,13 +9,13 @@ let string_of_uniform = function
    | UTerminal s -> s
    | USynchro  s -> s
 
-let uni_compare x y =
-   String.compare (string_of_uniform x) (string_of_uniform y)
+let uniform_compare x y =
+  String.compare (string_of_uniform x) (string_of_uniform y)
 
 module UniformSet = Set.Make (
    struct
       type t = uniform
-      let compare = uni_compare  
+      let compare = uniform_compare  
    end
 )
 
