@@ -78,8 +78,9 @@ let rec prod_first l =
   | []                      -> U.empty
 
   
-let closures = H.create 1000
-let goto_map = H.create 1000
+let maps_size = 10007
+let closures = H.create maps_size
+let goto_map = H.create maps_size
 
 let rec closure = mem_rec closures (fun closure old_set ->
   let new_set = I.fold (fun x result ->
